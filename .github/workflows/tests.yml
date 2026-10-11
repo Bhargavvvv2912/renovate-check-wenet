@@ -1,0 +1,32 @@
+name: tests
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+      - run: python -m pip install --upgrade pip
+      # The same ladder aura.environment climbs. pip 24.1 skips any release
+      # whose metadata is not valid PEP 440 and then reports it as missing, so
+      # a baseline that needs an older installer would fail here and every
+      # Dependabot pull request with it -- scoring this arm on a repository
+      # that never worked rather than on what Dependabot proposed.
+      # Then, as the arms do, the build tools of the pins' own era for a
+      # source distribution a current setuptools can no longer build.
+      - run: |
+          python -m pip install -r requirements.txt || { python -m pip install -q pip==24.0 && python -m pip install -r requirements.txt; } || { python -m pip install -q setuptools==44.1.1 wheel==0.34.2 && python -m pip install --no-build-isolation -r requirements.txt; }
+          python -m pip install "setuptools<70"
+      - run: python -m pip install -e . --no-deps
+      # --deselect: tests that fail before anything is bumped. CI judges a
+      # pull request absolutely, the arms judge against the baseline; without
+      # this the project's own broken test fails every pull request.
+      - run: python -m pytest test/test_file_utils.py test/wenet/dataset/test_processor.py test/wenet/text/test_bpe_tokenizer.py test/wenet/text/test_char_tokenizer.py test/wenet/text/test_paraformer_tokenizer.py test/wenet/text/test_parallel.py test/wenet/text/test_whisper_tokenizer.py test/wenet/transformer/test_grad_ckpt.py test/wenet/utils/test_init_model.py test/wenet/utils/test_init_tokenizer.py test/wenet/whisper/test_whisper.py --deselect test/wenet/text/test_parallel.py::test_hugging_face_tokenizer --deselect test/wenet/transformer/test_grad_ckpt.py::test_encoder_gradient_checkpointing[BiTransformerDecoder] --deselect test/wenet/transformer/test_grad_ckpt.py::test_encoder_gradient_checkpointing[ConformerEncoder] --deselect test/wenet/transformer/test_grad_ckpt.py::test_encoder_gradient_checkpointing[TransformerDecoder] --deselect test/wenet/transformer/test_grad_ckpt.py::test_encoder_gradient_checkpointing[TransformerEncoder] --deselect test/wenet/utils/test_init_model.py::test_init_model --deselect test/wenet/whisper/test_whisper.py::test_load_audio[test/resources/aishell-BAC009S0724W0121.wav] --deselect test/wenet/whisper/test_whisper.py::test_load_audio[test/resources/librispeech-1995-1837-0001.wav] --deselect test/wenet/whisper/test_whisper.py::test_log_mel_spectrogram[test/resources/aishell-BAC009S0724W0121.wav] --deselect test/wenet/whisper/test_whisper.py::test_log_mel_spectrogram[test/resources/librispeech-1995-1837-0001.wav] --deselect test/wenet/whisper/test_whisper.py::test_model[base-test/resources/librispeech-1995-1837-0001.wav] --deselect test/wenet/whisper/test_whisper.py::test_model[medium-test/resources/librispeech-1995-1837-0001.wav] --deselect test/wenet/whisper/test_whisper.py::test_model[small-test/resources/aishell-BAC009S0724W0121.wav] --deselect test/wenet/whisper/test_whisper.py::test_model[tiny-test/resources/aishell-BAC009S0724W0121.wav] --deselect test/wenet/whisper/test_whisper.py::test_sinusoids[1024-128] --deselect test/wenet/whisper/test_whisper.py::test_sinusoids[2048-256] --deselect test/wenet/whisper/test_whisper.py::test_sinusoids[4096-512] --deselect test/wenet/whisper/test_whisper.py::test_sinusoids[512-80]
