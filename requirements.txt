@@ -1,6 +1,6 @@
 Pillow==10.2.0
 pyyaml==6.0.1
-sentencepiece==0.1.99
+sentencepiece==0.2.2
 tensorboard==2.15.1
 tensorboardX==2.6.2.2
 textgrid==1.5
