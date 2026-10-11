@@ -2,7 +2,7 @@ Pillow==10.2.0
 pyyaml==6.0.1
 sentencepiece==0.1.99
 tensorboard==2.15.1
-tensorboardX==2.6.2.2
+tensorboardX==2.6.5
 textgrid==1.5
 pytest==7.4.4
 flake8==3.8.2
